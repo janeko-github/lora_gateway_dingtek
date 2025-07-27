@@ -1,0 +1,11 @@
+necesito una aplicacion en python que escuche y escriba, mensajes de unión (Join), datos (Data), y señales de control (Control), y los tipos , uplink y downlink en el puerto 1700 de lora_pkt_fwd con el protocolo OTAA de lorawan de semtech, haciendo el join,
+teniendo como variables el disposito
+
+            JoinRequest, JoinAccept, UnconfirmedDataUp, ConfirmedDataUp, UnconfirmedDataDown, ConfirmedDataDown, RejoinRequest
+
+
+necesito una aplicacion en python que escuche puerto 1700 de lora_pkt_fwd con el protocolo OTAA de lorawan de semtech, 
+que se conecte a un dispositivo con unos identificadores parametrizables (DevEUI,JoinEUI,AppKey)
+y que cuando llegue un mensaje del tipo UnconfirmedDataUp envien un downlink con un payload a ese dispoitivo
+
+
