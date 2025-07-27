@@ -10,10 +10,14 @@ import binascii
 import os
 
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+
 # Configuración de identificadores
 GATEWAY_ID = "AA555A0000000000"
 DEV_EUI = "8CF9572000133C5C"   
 JOIN_EUI = "8CF9572000000000"  
+APP_EUI = JOIN_EUI
 APP_KEY = "2B7E151628AED2A6ABF7158809CF4F3C"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -65,13 +69,48 @@ class LoRaWANServer:
             if self.sock:
                 self.sock.close()
 
+    def derive_app_skey(self, dev_nonce: bytes):
+        # Crear el nonce para derivar la clave
+        nonce = bytearray(16)
+        nonce[0] = 0x02  # Para AppSKey
+        nonce[1:9] = JOIN_EUI[::-1]   # AppEUI invertido
+        nonce[9:13] = dev_nonce       # DevNonce
+        nonce[13:17] = DEV_EUI[::-1]  # DevEUI invertido
+        
+        # AES-128 encrypt
+        cipher = Cipher(algorithms.AES(APP_KEY), modes.ECB(), backend=default_backend())
+        encryptor = cipher.encryptor()
+        app_skey = encryptor.update(bytes(nonce)) + encryptor.finalize()
+        
+        return app_skey
+
+                
+    def decrypt_frm_payload(self,frm_payload: bytes, key: bytes, dev_addr: bytes, fcnt: int, uplink: bool):
+        """
+        Descifra el FRMPayload usando AES-CTR.
+        """
+        # Crear el nonce (16 bytes)
+        nonce = bytearray(16)
+        nonce[0] = 0x01 if uplink else 0x02
+        nonce[1:5] = dev_addr[::-1]  # DevAddr en orden inverso
+        nonce[5:9] = fcnt.to_bytes(4, byteorder='little')
+        nonce[9] = 0x00  # 0x00 para datos
+
+        # Crear cipher AES-CTR
+        cipher = Cipher(algorithms.AES(key), modes.CTR(nonce), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted = decryptor.update(frm_payload) + decryptor.finalize()
+
+        return decrypted
+
     def parse_lorawan_packet(self,data: bytes):
         # MHDR (1 byte)
         mhdr = data[0]
         logger.info(f"{datetime.now()} MHDR explain {bin(mhdr)[2:]}") 
         mtype = (mhdr >> 5) #& 0x07
         major = mhdr & 0x03
-
+ 
+    
         mtype_names = {
             0: "Join Request",
             1: "Join Accept",
@@ -114,6 +153,14 @@ class LoRaWANServer:
             logger.info(f"{datetime.now()} FPort: {fport}")
             logger.info(f"{datetime.now()} FRMPayload Longitud: {len(frm_payload.hex()) / 2 } bytes")
             logger.info(f"{datetime.now()} FRMPayload: {frm_payload.hex()}")
+            app_skey = derive_app_skey(self, dev_nonce)
+            # Descifrar FRMPayload
+            uplink = True  # ajustar según el tipo de mensaje
+            try:
+                decrypted = self.decrypt_frm_payload(frm_payload, app_skey, dev_addr, fcnt, uplink)
+                logger.info(f"{datetime.now()} FRMPayload (descifrado): {decrypted.hex()} | ASCII: {decrypted.decode('utf-8', errors='ignore')}")
+            except Exception as e:
+                logger.error(f"{datetime.now()} Error al descifrar:", e)
 
 
     # Si es un mensaje de datos (no Join), puedes seguir desglosando FHDR, FPort, etc.
