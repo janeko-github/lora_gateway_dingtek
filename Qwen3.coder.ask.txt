@@ -8,4 +8,20 @@ necesito una aplicacion en python que escuche puerto 1700 de lora_pkt_fwd con el
 que se conecte a un dispositivo con unos identificadores parametrizables (DevEUI,JoinEUI,AppKey)
 y que cuando llegue un mensaje del tipo UnconfirmedDataUp envien un downlink con un payload a ese dispoitivo
 
+desglosar el PHYPayload, MDR MacPayload y MIC
+y desglosar el frmPayload
+como manejar un join request
+falta conectar con el gateway por el puerto 1700
+funcion tengo que añadir para poder enviar un payload a un dispositivo para configurarlo
+los datos del gateway son
+
+GATEWAY_ID = "AA555A0000000000"
+DEV_EUI = "8CF9572000133C5C"   
+JOIN_EUI = "8CF9572000000000"  
+APP_EUI = JOIN_EUI
+APP_KEY = "2B7E151628AED2A6ABF7158809CF4F3C"
+
+ha de incluir  logging y datetime de forma que los logs los haga a un fichero llamado __file__ + ".log
+Ese fichero que se añada con el handler a logger
+Y que logger informe de la situacion de ese fichero con  os.path.basename(__file__)
 
