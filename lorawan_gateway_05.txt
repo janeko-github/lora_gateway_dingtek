@@ -1,0 +1,66 @@
+necesito una aplicacion en python que se conecte a un gateway por el puerto 1700 de lora_pkt_fwd con el protocolo OTAA de lorawan de semtech y el identificador del gateway GATEWAY_ID = "AA555A0000000000", haga el join lo acepte con el processo de loggin completo del proceso de autorizacion
+que se conecte a un dispositivo con unos identificadores parametrizables (
+DEV_EUI = "8CF9572000133C5C"   
+JOIN_EUI = "8CF9572000000000"  
+APP_EUI = JOIN_EUI
+APP_KEY = "2B7E151628AED2A6ABF7158809CF4F3C"
+)
+y que cuando llegue un mensaje del tipo UnconfirmedDataUp envien un downlink con el payload 80029999010181 a ese dispositivo antes de un segundo
+
+los mensajes recibidos deben ser diseccionados teniendo en cuenta que el data debe de tener una longitud de mas de 5 bytes
+la cabecera del data tiene 5 bytes y el final del data tiene 2 bytes, el primer byte del data en hexadecimal debe de ser 80, el segundo 00, el tercero device_type debe de ser 1, el cuarto es un byte que indica el record_data_type, el quinto byte llamado packet_size indica el tamaño del data que debe de concidir con la longitud del data
+Lo que esta entre la cabecera y el final es el payload, el cual, si el record_type es 1 o 2
+
+la estructura del payload en rust es esta
+
+              let mut battery_check = false;
+                //let battery_volt: u16 = 0;
+                let mut longitude: f32 = 0.0;
+                let mut latitude: f32 = 0.0;
+                let mut battery_volt: u16 = 0;
+
+                if payload_len == 12 {
+                    battery_check = true;
+                }
+
+                let mut payload = BitUnpacker::new(&payload);
+
+                let height = payload.u16();
+                let gps_present = payload.u8();
+                if gps_present == 1 {
+                    battery_check = false;
+                    if payload_len == 20 {
+                        battery_check = true;
+                    }
+                    longitude = payload.f32();
+                    latitude = payload.f32();
+                }
+
+                let temperature = payload.u8();
+                let _reserved = payload.u8();
+                let angle = payload.u8();
+                let full_status = payload.bits(4);
+                let fire_status = payload.bits(4);
+                let fall_status = payload.bits(4);
+                let power_status = payload.bits(4);
+                if battery_check {
+                    battery_volt = payload.u16();
+                }
+
+                let _frame_count = payload.u16();
+
+                info!("   height: {} mm", height);
+                info!("   temperature: {} ºC", temperature);
+                info!("   angle: {} º", angle);
+                info!("   full_status: {}", full_status);
+                info!("   fire_status: {}", fire_status);
+                info!("   fall_status: {}", fall_status);
+                info!("   power_status: {}", power_status);
+                if gps_present == 1 {
+                    info!("   longitude: {:.6}", longitude);
+                    info!("   latitude: {:.6}", latitude);
+                }
+                if battery_check {
+                    info!(" battery volt: {:.2}v", battery_volt as f32 / 100.0);
+                }
+

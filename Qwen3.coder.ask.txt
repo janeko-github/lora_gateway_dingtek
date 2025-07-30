@@ -4,9 +4,15 @@ teniendo como variables el disposito
             JoinRequest, JoinAccept, UnconfirmedDataUp, ConfirmedDataUp, UnconfirmedDataDown, ConfirmedDataDown, RejoinRequest
 
 
-necesito una aplicacion en python que escuche puerto 1700 de lora_pkt_fwd con el protocolo OTAA de lorawan de semtech, 
-que se conecte a un dispositivo con unos identificadores parametrizables (DevEUI,JoinEUI,AppKey)
-y que cuando llegue un mensaje del tipo UnconfirmedDataUp envien un downlink con un payload a ese dispoitivo
+necesito una aplicacion en python se conecte a un gateway por el puerto 1700 de lora_pkt_fwd con el protocolo OTAA de lorawan de semtech y el identificador del gateway GATEWAY_ID = "AA555A0000000000", 
+y que haga un join se conecte a un dispositivo con unos identificadores parametrizables (
+DEV_EUI = "8CF9572000133C5C"   
+JOIN_EUI = "8CF9572000000000"  
+APP_EUI = JOIN_EUI
+APP_KEY = "2B7E151628AED2A6ABF7158809CF4F3C"
+)
+y que cuando llegue un mensaje del tipo UnconfirmedDataUp envien un downlink con el payload 80029999010181 a ese dispositivo
+
 
 desglosar el PHYPayload, MDR MacPayload y MIC
 y desglosar el frmPayload
